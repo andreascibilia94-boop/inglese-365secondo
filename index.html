@@ -69,7 +69,7 @@
             <!-- Configurazione API Key -->
             <div class="api-box">
                 <label for="apiKey">🔑 CHIAVE API GEMINI GOOGLE:</label>
-                <input type="password" id="apiKey" placeholder="Incolla qui la tua API Key (AIzaSy...)" onchange="saveApiKey()">
+                <input type="password" id="apiKey" placeholder="Incolla qui la tua API Key" onchange="saveApiKey()">
             </div>
 
             <div class="timer-container" style="margin-top: 12px;">
@@ -129,7 +129,7 @@
 
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
-            recognition.lang = 'en-US'; // Impostato su Inglese americano per la massima precisione
+            recognition.lang = 'en-US';
             recognition.continuous = false;
             recognition.interimResults = false;
 
@@ -168,7 +168,7 @@
             if (synth.speaking) synth.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
-            utterance.rate = 0.95; // Velocità naturale per facilitare l'ascolto
+            utterance.rate = 0.95;
             synth.speak(utterance);
         }
 
@@ -192,7 +192,10 @@
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': apiKey
+                    },
                     body: JSON.stringify({
                         contents: [{
                             parts: [{ text: `Sei Alex, un tutor di inglese amichevole per uno studente italiano. Rispondi all'utente in modo conciso (massimo 2-3 frasi in inglese). Se l'utente fa un errore di grammatica in inglese, correggilo brevemente e con gentilezza prima di rispondere. Utente dice: "${text}"` }]
@@ -201,16 +204,19 @@
                 });
 
                 const data = await res.json();
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
                     const reply = data.candidates[0].content.parts[0].text;
                     addMsg(reply, 'tutor');
                     speak(reply);
                     document.getElementById('statusTag').innerText = "Pronto per la prossima frase!";
+                } else if (data.error) {
+                    addMsg(`Errore Gemini: ${data.error.message}`, 'tutor');
+                    document.getElementById('statusTag').innerText = "⚠️ Errore API.";
                 } else {
-                    throw new Error("Chiave API errata o limite superato.");
+                    throw new Error("Risposta non valida.");
                 }
             } catch (e) {
-                addMsg("Errore di connessione a Gemini: verifica che l'API Key sia corretta.", 'tutor');
+                addMsg("Errore di connessione a Gemini: verifica la chiave API.", 'tutor');
                 document.getElementById('statusTag').innerText = "⚠️ Errore API.";
             }
         }
