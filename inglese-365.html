@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English 365 Days - AI Learning Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 16px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 550px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+        .card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .tutor-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .avatar-box { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); flex-shrink: 0; }
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .timer-container { text-align: center; background: #eff6ff; padding: 12px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #bfdbfe; }
+        .timer-val { font-size: 2.4rem; font-weight: 700; color: var(--primary); }
+        .btn-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+        
+        button { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; flex: 1; transition: all 0.2s; }
+        button:hover { background: var(--primary-hover); }
+        button.sec { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); }
+        button.mic-on { background: var(--accent-red) !important; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        .chat-area { height: 240px; overflow-y: auto; background: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 14px; border-radius: 10px; font-size: 0.95rem; max-width: 85%; line-height: 1.4; }
+        .msg.tutor { background: white; border: 1px solid var(--border); align-self: flex-start; color: var(--text-main); }
+        .msg.user { background: var(--primary); color: white; align-self: flex-end; }
+        .status-tag { font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-bottom: 6px; font-weight: 500; }
+        
+        .input-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+        .input-bar input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-size: 0.95rem; }
+        
+        .api-box { background: #f1f5f9; padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+        .api-box label { font-size: 0.75rem; font-weight: bold; color: var(--text-muted); }
+        .api-box input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; }
+
+        .grid-container { max-height: 220px; overflow-y: auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; padding-right: 4px; }
+        .day-item { border: 1px solid var(--border); border-radius: 6px; padding: 8px 4px; text-align: center; font-size: 0.75rem; cursor: pointer; background: white; }
+        .day-item.done { background: #dcfce7; border-color: var(--accent-green); color: #15803d; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="tutor-header">
+                <div class="avatar-box">
+                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80" alt="Alex Tutor">
+                </div>
+                <div>
+                    <h3>Alex - AI Tutor (Gemini)</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted)">Percorso 365 Giorni (15-20 min)</p>
+                </div>
+            </div>
+
+            <!-- Configurazione API Key -->
+            <div class="api-box">
+                <label for="apiKey">🔑 CHIAVE API GEMINI GOOGLE:</label>
+                <input type="password" id="apiKey" placeholder="Incolla qui la tua API Key (AIzaSy...)" onchange="saveApiKey()">
+            </div>
+
+            <div class="timer-container" style="margin-top: 12px;">
+                <div class="timer-val" id="timer">20:00</div>
+                <div class="btn-group">
+                    <button onclick="toggleTimer()" id="timerBtn">▶ Avvia Lezione</button>
+                    <button class="sec" onclick="resetTimer()">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div class="status-tag" id="statusTag">Pronto. Incolla l'API Key e parla in inglese!</div>
+
+            <!-- Area Chat -->
+            <div class="chat-area" id="chat">
+                <div class="msg tutor">Hello! I'm Alex. Ready to practice speaking English today?</div>
+            </div>
+
+            <!-- Input Vocale e Testo -->
+            <div class="input-bar">
+                <input type="text" id="userInput" placeholder="Parla o scrivi qui..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="sec" id="micBtn" onclick="toggleMic()" style="flex:0 0 50px;">🎤</button>
+                <button onclick="sendMessage()" style="flex:0 0 70px;">Invia</button>
+            </div>
+        </div>
+
+        <!-- Registro 365 Giorni -->
+        <div class="card">
+            <h4>📅 Progresso Salvato (<span id="progCount">0</span>/365)</h4>
+            <div class="grid-container" id="grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Timer
+        let timeLeft = 1200, timerId = null;
+        function updateTimer() {
+            const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+            document.getElementById('timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            if (timerId) { clearInterval(timerId); timerId = null; btn.innerText = '▶ Riprendi'; }
+            else {
+                btn.innerText = '⏸ Pausa';
+                timerId = setInterval(() => {
+                    if (timeLeft > 0) { timeLeft--; updateTimer(); }
+                    else { clearInterval(timerId); alert('Lezione di oggi completata!'); }
+                }, 1000);
+            }
+        }
+        function resetTimer() { clearInterval(timerId); timerId = null; timeLeft = 1200; updateTimer(); document.getElementById('timerBtn').innerText = '▶ Avvia Lezione'; }
+
+        // Speech & Gemini AI Integration
+        const synth = window.speechSynthesis;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null, isListening = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US'; // Impostato su Inglese americano per la massima precisione
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                document.getElementById('statusTag').innerText = "🎙️ Ascolto in corso... Parla in inglese!";
+            };
+
+            recognition.onresult = (e) => {
+                const text = e.results[0][0].transcript;
+                document.getElementById('userInput').value = text;
+                toggleMic();
+                sendMessage();
+            };
+
+            recognition.onerror = (e) => {
+                document.getElementById('statusTag').innerText = "⚠️ Errore microfono o voce non rilevata. Riprova.";
+                toggleMic();
+            };
+        }
+
+        function toggleMic() {
+            if (!recognition) return alert('Riconoscimento vocale non supportato.');
+            const micBtn = document.getElementById('micBtn');
+            if (isListening) {
+                recognition.stop();
+                micBtn.classList.remove('mic-on');
+                isListening = false;
+            } else {
+                recognition.start();
+                micBtn.classList.add('mic-on');
+                isListening = true;
+            }
+        }
+
+        function speak(text) {
+            if (synth.speaking) synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.95; // Velocità naturale per facilitare l'ascolto
+            synth.speak(utterance);
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMsg(text, 'user');
+            input.value = '';
+
+            const apiKey = localStorage.getItem('gemini_api_key') || document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                const alertMsg = "Inserisci prima la tua API Key di Gemini nel campo in alto!";
+                addMsg(alertMsg, 'tutor');
+                return;
+            }
+
+            document.getElementById('statusTag').innerText = "🤖 Alex sta pensando...";
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: `Sei Alex, un tutor di inglese amichevole per uno studente italiano. Rispondi all'utente in modo conciso (massimo 2-3 frasi in inglese). Se l'utente fa un errore di grammatica in inglese, correggilo brevemente e con gentilezza prima di rispondere. Utente dice: "${text}"` }]
+                        }]
+                    })
+                });
+
+                const data = await res.json();
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const reply = data.candidates[0].content.parts[0].text;
+                    addMsg(reply, 'tutor');
+                    speak(reply);
+                    document.getElementById('statusTag').innerText = "Pronto per la prossima frase!";
+                } else {
+                    throw new Error("Chiave API errata o limite superato.");
+                }
+            } catch (e) {
+                addMsg("Errore di connessione a Gemini: verifica che l'API Key sia corretta.", 'tutor');
+                document.getElementById('statusTag').innerText = "⚠️ Errore API.";
+            }
+        }
+
+        function addMsg(text, sender) {
+            const chat = document.getElementById('chat');
+            const msg = document.createElement('div');
+            msg.className = `msg ${sender}`;
+            msg.innerText = text;
+            chat.appendChild(msg);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            localStorage.setItem('gemini_api_key', key);
+            document.getElementById('statusTag').innerText = "🔑 API Key salvata!";
+        }
+
+        // Progresso 365 giorni
+        const grid = document.getElementById('grid');
+        let savedDays = JSON.parse(localStorage.getItem('english365_saved') || '[]');
+
+        for(let i=1; i<=365; i++) {
+            const d = document.createElement('div');
+            d.className = `day-item ${savedDays.includes(i) ? 'done' : ''}`;
+            d.innerHTML = `<b>${i}</b><br>${i%3===0?'Scritto':'Voce'}`;
+            d.onclick = () => {
+                if (savedDays.includes(i)) savedDays = savedDays.filter(day => day !== i);
+                else savedDays.push(i);
+                localStorage.setItem('english365_saved', JSON.stringify(savedDays));
+                d.classList.toggle('done');
+                updateProg();
+            };
+            grid.appendChild(d);
+        }
+
+        function updateProg() { document.getElementById('progCount').innerText = savedDays.length; }
+
+        // Caricamento chiave salvata
+        const savedKey = localStorage.getItem('gemini_api_key') || '';
+        if (savedKey) document.getElementById('apiKey').value = savedKey;
+        updateProg();
+    </script>
+</body>
+</html>
